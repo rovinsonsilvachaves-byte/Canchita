@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Canchas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+    <!-- CONTENEDOR LOGIN -->
+    <div id="login-container" class="card">
+        <h2>Iniciar Sesión</h2>
+        <form id="login-form">
+            <label>Usuario:</label>
+            <input type="text" id="login-user" placeholder="Ej. administrador" required>
+            <label>Contraseña:</label>
+            <input type="password" id="login-pass" placeholder="••••••••" required>
+            <button type="button" onclick="mostrarDashboard()">Ingresar</button>
+        </form>
+    </div>
+
+    <!-- CONTENEDOR DASHBOARD -->
+    <div id="dashboard-container" style="display: none; width: 100%; max-width: 950px;">
+        <header>
+            <h1>Control de Canchas</h1>
+            <div>
+                <button class="btn-menu" onclick="abrirUsuarios()">👥 Usuarios</button>
+                <button class="btn-menu" onclick="abrirHistorial()">📜 Historial</button>
+                <button class="btn-menu" onclick="abrirAjustes()">⚙️ Ajustes</button>
+                <button class="btn-logout" onclick="mostrarLogin()">Cerrar Sesión</button>
+            </div>
+        </header>
+
+        <!-- CARDS DE GANANCIAS -->
+        <section class="ganancias-container">
+            <div class="card card-ganancia">
+                <h3>Ganancias Diarias</h3>
+                <p class="monto" id="ganancia-dia">S/. 0.00</p>
+            </div>
+            <div class="card card-ganancia">
+                <h3>Ganancias Mensuales</h3>
+                <p class="monto" id="ganancia-mes">S/. 0.00</p>
+            </div>
+        </section>
+
+        <!-- CONTENIDO PRINCIPAL: HORARIOS -->
+        <main class="main-content card">
+            <div class="filtro-canchas">
+                <div style="flex: 1; min-width: 200px;">
+                    <label for="seleccionar-cancha"><strong>Seleccionar Cancha:</strong></label>
+                    <select id="seleccionar-cancha" onchange="cambiarCancha()">
+                        <option value="futbol">⚽ Cancha de Fútbol</option>
+                        <option value="voley1">🏐 Cancha de Vóley 1</option>
+                        <option value="voley2">🏐 Cancha de Vóley 2</option>
+                    </select>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <label for="seleccionar-fecha"><strong>Seleccionar Fecha:</strong></label>
+                    <input type="date" id="seleccionar-fecha" onchange="cambiarFecha()">
+                </div>
+            </div>
+
+            <div class="tabla-horarios">
+                <h3 id="titulo-horarios">Horarios Disponibles</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Hora</th>
+                            <th>Estado</th>
+                            <th>Cliente</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-cuerpo">
+                        <!-- Dinámico -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL GESTIÓN DE USUARIOS -->
+    <div id="overlay-usuarios" class="modal-overlay" onclick="cerrarUsuarios()"></div>
+    <div id="modal-usuarios" class="card modal-window">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3>Gestión de Usuarios</h3>
+            <button onclick="cerrarUsuarios()" style="width: auto; background: none; color: #ef4444; font-size: 20px; padding: 0;">✕</button>
+        </div>
+        
+        <form id="registro-usuario-form" style="margin-bottom: 20px;">
+            <label>Nuevo Usuario:</label>
+            <input type="text" id="nuevo-usuario" placeholder="Ej. juan123" required>
+            
+            <label>Contraseña:</label>
+            <input type="password" id="nueva-contra" placeholder="••••••••" required>
+            
+            <label>Rol del Usuario:</label>
+            <select id="rol-usuario">
+                <option value="Empleado">Empleado / Trabajador</option>
+                <option value="Administrador">Administrador</option>
+            </select>
+            
+            <button type="button" onclick="agregarUsuario()" style="background: #10b981;">Guardar Usuario</button>
+        </form>
+
+        <div>
+            <h4>Usuarios Registrados</h4>
+            <div style="max-height: 250px; overflow-y: auto;">
+                <table style="margin-top: 10px; font-size: 14px;">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Rol</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-usuarios-cuerpo">
+                        <!-- Dinámico -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <button class="btn-cerrar-modal" onclick="cerrarUsuarios()">Cerrar Ventana</button>
+    </div>
+
+    <!-- MODAL HISTORIAL DE RESERVAS -->
+    <div id="overlay-historial" class="modal-overlay" onclick="cerrarHistorial()"></div>
+    <div id="modal-historial" class="card modal-window modal-large">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3>Historial de Reservas (Últimas 100)</h3>
+            <button onclick="cerrarHistorial()" style="width: auto; background: none; color: #ef4444; font-size: 20px; padding: 0;">✕</button>
+        </div>
+        <div style="max-height: 450px; overflow-y: auto;">
+            <table style="font-size: 13px; margin-top: 5px;">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Cancha</th>
+                        <th>Cliente</th>
+                        <th>Pago</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-historial-cuerpo">
+                    <!-- Dinámico -->
+                </tbody>
+            </table>
+        </div>
+        <button class="btn-cerrar-modal" onclick="cerrarHistorial()">Cerrar Ventana</button>
+    </div>
+
+    <!-- MODAL AJUSTES DE TARIFAS -->
+    <div id="overlay-ajustes" class="modal-overlay" onclick="cerrarAjustes()"></div>
+    <div id="modal-ajustes" class="card modal-window">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3>Configuración de Tarifas</h3>
+            <button onclick="cerrarAjustes()" style="width: auto; background: none; color: #ef4444; font-size: 20px; padding: 0;">✕</button>
+        </div>
+        <form id="ajustes-form" style="margin-bottom: 10px;">
+            <h4>⚽ Cancha de Fútbol</h4>
+            <div class="grid-config">
+                <div>
+                    <label>Precio Día (S/.):</label>
+                    <input type="number" step="0.50" id="ajuste-futbol-dia" required>
+                </div>
+                <div>
+                    <label>Precio Noche (S/.):</label>
+                    <input type="number" step="0.50" id="ajuste-futbol-noche" required>
+                </div>
+            </div>
+
+            <h4>🏐 Canchas de Vóley (1 y 2)</h4>
+            <div class="grid-config">
+                <div>
+                    <label>Precio Día (S/.):</label>
+                    <input type="number" step="0.50" id="ajuste-voley-dia" required>
+                </div>
+                <div>
+                    <label>Precio Noche (S/.):</label>
+                    <input type="number" step="0.50" id="ajuste-voley-noche" required>
+                </div>
+            </div>
+
+            <h4>💡 Horario Nocturno</h4>
+            <label>Hora Inicio de Tarifa Noche:</label>
+            <select id="ajuste-hora-noche">
+                <option value="17">05:00 PM</option>
+                <option value="18">06:00 PM</option>
+                <option value="19">07:00 PM</option>
+                <option value="20">08:00 PM</option>
+            </select>
+
+            <button type="button" onclick="guardarAjustes()" style="background: #10b981; margin-top: 15px;">💾 Guardar Ajustes</button>
+        </form>
+        <button class="btn-cerrar-modal" onclick="cerrarAjustes()">Cerrar Ventana</button>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script>
+    // Inicialización del calendario con la fecha local de hoy
+    window.addEventListener('DOMContentLoaded', () => {
+        const hoy = new Date();
+        const anio = hoy.getFullYear();
+        const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+        const dia = String(hoy.getDate()).padStart(2, '0');
+        document.getElementById('seleccionar-fecha').value = `${anio}-${mes}-${dia}`;
+    });
+
+    // Iniciar Sesión
+    function mostrarDashboard() {
+        const txtUser = document.getElementById('login-user').value.trim();
+        const txtPass = document.getElementById('login-pass').value.trim();
+
+        if(txtUser === "" || txtPass === "") {
+            alert("Por favor, ingresa tu usuario y contraseña.");
+            return;
+        }
+
+        const datos = new FormData();
+        datos.append('usuario', txtUser);
+        datos.append('contrasena', txtPass);
+
+        fetch('login.php', {
+            method: 'POST',
+            body: datos
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('dashboard-container').style.display = 'block';
+                
+                generarHorarios(); 
+                actualizarTablaUsuarios();
+                actualizarGanancias();
+                
+                alert(`¡Bienvenido al sistema, ${data.user.usuario}!`);
+            } else {
+                alert("❌ " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("Hubo un problema al conectar con el servidor.");
+        });
+    }
+
+    function mostrarLogin() {
+        document.getElementById('login-user').value = "";
+        document.getElementById('login-pass').value = "";
+        cerrarUsuarios();
+        cerrarHistorial();
+        cerrarAjustes();
+        document.getElementById('dashboard-container').style.display = 'none';
+        document.getElementById('login-container').style.display = 'block';
+    }
+
+    // Funciones modales
+    function abrirUsuarios() {
+        document.getElementById('modal-usuarios').style.display = 'block';
+        document.getElementById('overlay-usuarios').style.display = 'block';
+    }
+    function cerrarUsuarios() {
+        document.getElementById('modal-usuarios').style.display = 'none';
+        document.getElementById('overlay-usuarios').style.display = 'none';
+    }
+
+    function abrirHistorial() {
+        document.getElementById('modal-historial').style.display = 'block';
+        document.getElementById('overlay-historial').style.display = 'block';
+        cargarHistorial();
+    }
+    function cerrarHistorial() {
+        document.getElementById('modal-historial').style.display = 'none';
+        document.getElementById('overlay-historial').style.display = 'none';
+    }
+
+    function abrirAjustes() {
+        document.getElementById('modal-ajustes').style.display = 'block';
+        document.getElementById('overlay-ajustes').style.display = 'block';
+        cargarAjustes();
+    }
+    function cerrarAjustes() {
+        document.getElementById('modal-ajustes').style.display = 'none';
+        document.getElementById('overlay-ajustes').style.display = 'none';
+    }
+
+    function cambiarCancha() {
+        generarHorarios();
+    }
+
+    function cambiarFecha() {
+        generarHorarios();
+    }
+
+    // 1. GENERAR HORARIOS CON CONFLICTOS CRUZADOS
+    function generarHorarios() {
+        const canchaSeleccionada = document.getElementById('seleccionar-cancha').value;
+        const fechaSeleccionada = document.getElementById('seleccionar-fecha').value;
+        const tablaCuerpo = document.getElementById('tabla-cuerpo');
+        const tituloHorarios = document.getElementById('titulo-horarios');
+        
+        // Actualizar título
+        const partesFecha = fechaSeleccionada.split('-');
+        const fechaFormateada = partesFecha.length === 3 ? `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}` : fechaSeleccionada;
+        tituloHorarios.textContent = `Horarios para el día ${fechaFormateada}`;
+        tablaCuerpo.innerHTML = ''; 
+
+        // Consultar todas las reservas del día para evaluar conflictos
+        fetch(`obtener_reservas.php?fecha=${fechaSeleccionada}`)
+        .then(response => response.json())
+        .then(reservasGuardadas => {
+            const horaInicio = 7;  
+            const horaFin = 24;    
+
+            for (let i = horaInicio; i < horaFin; i++) {
+                let hInicio = i > 12 ? i - 12 : i;
+                let ampmInicio = i >= 12 && i < 24 ? 'PM' : 'AM';
+                if (hInicio === 0) hInicio = 12;
+
+                let siguienteHora = i + 1;
+                let hFin = siguienteHora > 12 ? siguienteHora - 12 : siguienteHora;
+                let ampmFin = (siguienteHora >= 12 && siguienteHora < 24) || siguienteHora === 24 ? 'PM' : 'AM';
+                if (siguienteHora === 24) { hFin = 12; ampmFin = 'AM'; }
+
+                const rangoHora = `${String(hInicio).padStart(2, '0')}:00 ${ampmInicio} - ${String(hFin).padStart(2, '0')}:00 ${ampmFin}`;
+
+                // Evaluar si este bloque horario está bloqueado o reservado
+                // Si visualizamos Fútbol: se bloquea con Fútbol(1), Vóley 1(2) o Vóley 2(3)
+                // Si visualizamos Vóley 1: se bloquea con Fútbol(1) o Vóley 1(2)
+                // Si visualizamos Vóley 2: se bloquea con Fútbol(1) o Vóley 2(3)
+                const reservaExistente = reservasGuardadas.find(r => {
+                    if (canchaSeleccionada === 'futbol') {
+                        return r.hora_id == i; 
+                    } else if (canchaSeleccionada === 'voley1') {
+                        return r.hora_id == i && (r.cancha_id == 2 || r.cancha_id == 1);
+                    } else if (canchaSeleccionada === 'voley2') {
+                        return r.hora_id == i && (r.cancha_id == 3 || r.cancha_id == 1);
+                    }
+                    return false;
+                });
+
+                // Validar si el horario ya pasó en el tiempo
+                const hoy = new Date();
+                const anioHoy = hoy.getFullYear();
+                const mesHoy = String(hoy.getMonth() + 1).padStart(2, '0');
+                const diaHoy = String(hoy.getDate()).padStart(2, '0');
+                const fechaHoyStr = `${anioHoy}-${mesHoy}-${diaHoy}`;
+                const horaActual = hoy.getHours();
+
+                let esPasado = false;
+                if (fechaSeleccionada < fechaHoyStr) {
+                    esPasado = true;
+                } else if (fechaSeleccionada === fechaHoyStr && i < horaActual) {
+                    esPasado = true;
+                }
+
+                let estadoTexto = "Libre";
+                let estadoClase = "libre";
+                let clienteTexto = "—";
+                let botonTexto = "Reservar";
+                let botonEstilo = "background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; color: white; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);";
+                let clickAction = `gestionarReserva(${i})`;
+
+                if (reservaExistente) {
+                    const esMismaCancha = (canchaSeleccionada === 'futbol' && reservaExistente.cancha_id == 1) ||
+                                          (canchaSeleccionada === 'voley1' && reservaExistente.cancha_id == 2) ||
+                                          (canchaSeleccionada === 'voley2' && reservaExistente.cancha_id == 3);
+
+                    estadoClase = "ocupado";
+                    clienteTexto = reservaExistente.cliente;
+                    botonTexto = "Liberar";
+                    botonEstilo = "background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); border: none; color: white; box-shadow: 0 2px 6px rgba(244, 63, 94, 0.25);";
+                    
+                    // Obtener la clave de cancha para la liberación
+                    let canchaBloqueante = "futbol";
+                    if (reservaExistente.cancha_id == 2) canchaBloqueante = "voley1";
+                    if (reservaExistente.cancha_id == 3) canchaBloqueante = "voley2";
+                    
+                    clickAction = `liberarReserva('${canchaBloqueante}', ${i}, '${reservaExistente.cliente}')`;
+
+                    if (esMismaCancha) {
+                        estadoTexto = "Ocupado";
+                    } else {
+                        let nombreCanchaBloqueante = "Fútbol";
+                        if (reservaExistente.cancha_id == 2) nombreCanchaBloqueante = "Vóley 1";
+                        if (reservaExistente.cancha_id == 3) nombreCanchaBloqueante = "Vóley 2";
+                        estadoTexto = `Bloqueado (${nombreCanchaBloqueante})`;
+                    }
+                }
+
+                // Deshabilitar acciones en horarios pasados
+                if (esPasado) {
+                    clickAction = "";
+                    if (reservaExistente) {
+                        botonTexto = "Completada";
+                        botonEstilo = "background: linear-gradient(135deg, #475569 0%, #334155 100%); border: none; color: #94a3b8; cursor: not-allowed; box-shadow: none; opacity: 0.85;";
+                    } else {
+                        botonTexto = "Expirado";
+                        botonEstilo = "background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); color: #475569; cursor: not-allowed; box-shadow: none;";
+                    }
+                }
+
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td>${rangoHora}</td>
+                    <td class="${estadoClase}" id="estado-${i}">${estadoTexto}</td>
+                    <td id="cliente-${i}">${clienteTexto}</td>
+                    <td>
+                        <button class="btn-reservar" id="btn-${i}" style="${botonEstilo}" onclick="${clickAction}">${botonTexto}</button>
+                    </td>
+                `;
+                tablaCuerpo.appendChild(fila);
+            }
+        })
+        .catch(err => console.error("Error cargando horarios:", err));
+    }
+
+    // 2. GESTIONAR RESERVA
+    function gestionarReserva(idHora) {
+        const canchaSeleccionada = document.getElementById('seleccionar-cancha').value;
+        const fechaSeleccionada = document.getElementById('seleccionar-fecha').value;
+        
+        let nombre = prompt("Ingrese el nombre del cliente para la reserva:");
+        if (nombre && nombre.trim() !== "") {
+            const datos = new FormData();
+            datos.append('cancha', canchaSeleccionada);
+            datos.append('cliente', nombre);
+            datos.append('hora_id', idHora);
+            datos.append('fecha', fechaSeleccionada);
+
+            fetch('guardar_reserva.php', {
+                method: 'POST',
+                body: datos
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    alert(`${data.message}\nCosto de la reserva: S/. ${parseFloat(data.monto).toFixed(2)}`);
+                    generarHorarios(); 
+                    actualizarGanancias(); 
+                } else {
+                    alert("Error: " + data.message);
+                }
+            })
+            .catch(err => console.error("Error al guardar reserva:", err));
+        }
+    }
+
+    // 3. LIBERAR RESERVA
+    function liberarReserva(cancha, idHora, cliente) {
+        const fechaSeleccionada = document.getElementById('seleccionar-fecha').value;
+        let nombreCanchaAmigable = "Fútbol";
+        if (cancha === 'voley1') nombreCanchaAmigable = "Vóley 1";
+        if (cancha === 'voley2') nombreCanchaAmigable = "Vóley 2";
+
+        let confirmar = confirm(`⚠️ ADVERTENCIA: ¿Estás seguro de liberar la reserva de la cancha de ${nombreCanchaAmigable} de ${cliente}?`);
+        if (confirmar) {
+            const datos = new FormData();
+            datos.append('cancha', cancha);
+            datos.append('hora_id', idHora);
+            datos.append('fecha', fechaSeleccionada);
+
+            fetch('eliminar_reserva.php', {
+                method: 'POST',
+                body: datos
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    generarHorarios();
+                    actualizarGanancias();
+                } else {
+                    alert("Error: " + data.message);
+                }
+            })
+            .catch(err => console.error("Error al liberar reserva:", err));
+        }
+    }
+
+    // 4. HISTORIAL DE RESERVAS
+    function cargarHistorial() {
+        const cuerpo = document.getElementById('tabla-historial-cuerpo');
+        cuerpo.innerHTML = '<tr><td colspan="6">Cargando historial...</td></tr>';
+
+        fetch('obtener_historial.php')
+        .then(response => response.json())
+        .then(data => {
+            cuerpo.innerHTML = '';
+            if (data.length === 0) {
+                cuerpo.innerHTML = '<tr><td colspan="6">No hay registros de reservas aún.</td></tr>';
+                return;
+            }
+
+            data.forEach(r => {
+                const fila = document.createElement('tr');
+                
+                // Formatear fecha
+                const partesFecha = r.fecha.split('-');
+                const fechaFormateada = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`;
+
+                // Formatear hora
+                const horaPartes = r.hora_inicio.split(':');
+                const horaNum = parseInt(horaPartes[0]);
+                const amp = horaNum >= 12 ? 'PM' : 'AM';
+                const horaAmigable = `${horaNum > 12 ? horaNum - 12 : (horaNum === 0 ? 12 : horaNum)}:00 ${amp}`;
+
+                // Estado
+                const esActiva = r.estado === 'Activa';
+                const estadoCelda = esActiva 
+                    ? '<span style="color: #10b981; font-weight: 600;">Activa</span>' 
+                    : '<span style="color: #64748b; text-decoration: line-through;">Cancelada</span>';
+
+                fila.innerHTML = `
+                    <td>${fechaFormateada}</td>
+                    <td>${horaAmigable}</td>
+                    <td>${r.nombre_cancha}</td>
+                    <td>${r.cliente}</td>
+                    <td style="font-weight: 600; color: #3b82f6;">S/. ${parseFloat(r.monto_pago).toFixed(2)}</td>
+                    <td>${estadoCelda}</td>
+                `;
+                cuerpo.appendChild(fila);
+            });
+        })
+        .catch(err => {
+            console.error("Error cargando historial:", err);
+            cuerpo.innerHTML = '<tr><td colspan="6">Error al cargar el historial.</td></tr>';
+        });
+    }
+
+    // 5. AJUSTES DE TARIFAS
+    function cargarAjustes() {
+        fetch('obtener_configuracion.php')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('ajuste-futbol-dia').value = parseFloat(data.precio_futbol_dia).toFixed(2);
+            document.getElementById('ajuste-futbol-noche').value = parseFloat(data.precio_futbol_noche).toFixed(2);
+            document.getElementById('ajuste-voley-dia').value = parseFloat(data.precio_voley_dia).toFixed(2);
+            document.getElementById('ajuste-voley-noche').value = parseFloat(data.precio_voley_noche).toFixed(2);
+            document.getElementById('ajuste-hora-noche').value = data.hora_inicio_noche;
+        })
+        .catch(err => console.error("Error cargando ajustes:", err));
+    }
+
+    function guardarAjustes() {
+        const fdia = document.getElementById('ajuste-futbol-dia').value;
+        const fnoche = document.getElementById('ajuste-futbol-noche').value;
+        const vdia = document.getElementById('ajuste-voley-dia').value;
+        const vnoche = document.getElementById('ajuste-voley-noche').value;
+        const hnoche = document.getElementById('ajuste-hora-noche').value;
+
+        if (!fdia || !fnoche || !vdia || !vnoche) {
+            alert("Por favor rellene todos los precios.");
+            return;
+        }
+
+        const datos = new FormData();
+        datos.append('precio_futbol_dia', fdia);
+        datos.append('precio_futbol_noche', fnoche);
+        datos.append('precio_voley_dia', vdia);
+        datos.append('precio_voley_noche', vnoche);
+        datos.append('hora_inicio_noche', hnoche);
+
+        fetch('guardar_configuracion.php', {
+            method: 'POST',
+            body: datos
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("✅ " + data.message);
+                cerrarAjustes();
+                generarHorarios(); // Refrescar por si cambió algún precio del día
+                actualizarGanancias();
+            } else {
+                alert("❌ " + data.message);
+            }
+        })
+        .catch(err => console.error("Error al guardar ajustes:", err));
+    }
+
+    // 6. ADMINISTRACIÓN DE USUARIOS
+    function actualizarTablaUsuarios() {
+        const cuerpoTabla = document.getElementById('tabla-usuarios-cuerpo');
+        cuerpoTabla.innerHTML = ''; 
+
+        fetch('obtener_usuarios.php')
+        .then(response => response.json())
+        .then(usuariosDB => {
+            usuariosDB.forEach(u => {
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td>${u.usuario}</td>
+                    <td><span style="color: #94a3b8;">${u.rol}</span></td>
+                    <td>
+                        <button onclick="cargarEditarUsuario(${u.id}, '${u.usuario}', '${u.rol}')" style="background: #3b82f6; padding: 4px 8px; font-size: 11px; width: auto; margin-right: 5px;">Editar</button>
+                        <button onclick="eliminarUsuario(${u.id}, '${u.usuario}')" style="background: #dc2626; padding: 4px 8px; font-size: 11px; width: auto;">Eliminar</button>
+                    </td>
+                `;
+                cuerpoTabla.appendChild(fila);
+            });
+        })
+        .catch(err => console.error("Error al traer usuarios:", err));
+    }
+
+    let idUsuarioEdicion = null; 
+
+    function agregarUsuario() {
+        const txtUsuario = document.getElementById('nuevo-usuario');
+        const txtContra = document.getElementById('nueva-contra');
+        const selRol = document.getElementById('rol-usuario');
+
+        if (txtUsuario.value.trim() === "") {
+            alert("Por favor, ingrese el nombre de usuario.");
+            return;
+        }
+
+        const datos = new FormData();
+        datos.append('usuario', txtUsuario.value);
+        datos.append('contrasena', txtContra.value);
+        datos.append('rol', selRol.value);
+
+        if (idUsuarioEdicion !== null) {
+            datos.append('id', idUsuarioEdicion);
+            fetch('editar_usuario.php', {
+                method: 'POST',
+                body: datos
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    alert(data.message);
+                    idUsuarioEdicion = null;
+                    document.getElementById('registro-usuario-form').querySelector('button').textContent = "Guardar Usuario";
+                    txtUsuario.disabled = false;
+                    actualizarTablaUsuarios();
+                    txtUsuario.value = "";
+                    txtContra.value = "";
+                } else {
+                    alert("Error: " + data.message);
+                }
+            });
+        } else {
+            if (txtContra.value.trim() === "") { alert("Defina una contraseña."); return; }
+            fetch('guardar_usuario.php', {
+                method: 'POST',
+                body: datos
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    alert(data.message);
+                    actualizarTablaUsuarios();
+                    txtUsuario.value = "";
+                    txtContra.value = "";
+                } else {
+                    alert("Error: " + data.message);
+                }
+            });
+        }
+    }
+
+    function cargarEditarUsuario(id, usuario, rol) {
+        idUsuarioEdicion = id;
+        document.getElementById('nuevo-usuario').value = usuario;
+        document.getElementById('nuevo-usuario').disabled = true;
+        document.getElementById('nueva-contra').placeholder = "Dejar en blanco para no cambiar";
+        document.getElementById('rol-usuario').value = rol;
+        document.getElementById('registro-usuario-form').querySelector('button').textContent = "🔧 Actualizar Cambios";
+    }
+
+    function eliminarUsuario(idUsuario, nombreUsuario) {
+        if (nombreUsuario === 'admin') {
+            alert("No se puede eliminar el usuario administrador principal.");
+            return;
+        }
+
+        let seguro = confirm(`¿Estás seguro de que deseas eliminar al usuario "${nombreUsuario}"?`);
+        if (seguro) {
+            const datos = new FormData();
+            datos.append('id', idUsuario);
+
+            fetch('eliminar_usuario.php', {
+                method: 'POST',
+                body: datos
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    alert(data.message);
+                    actualizarTablaUsuarios();
+                } else {
+                    alert("Error: " + data.message);
+                }
+            });
+        }
+    }
+
+    // 7. ACTUALIZAR GANANCIAS EN TIEMPO REAL
+    function actualizarGanancias() {
+        fetch('obtener_ganancias.php')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('ganancia-dia').textContent = "S/. " + parseFloat(data.diaria).toFixed(2);
+            document.getElementById('ganancia-mes').textContent = "S/. " + parseFloat(data.mensual).toFixed(2);
+        })
+        .catch(err => console.error("Error al actualizar montos financieros:", err));
+    }
+</script>
+</body>
+</html>
